@@ -27,19 +27,22 @@ async function main() {
             if (roomRes.data.roomId !== 'admin-room') throw new Error('Room creation failed');
             console.log('✅ Admin room creation passed');
         } catch (e: any) {
-            console.error('Room creation failed:', e.response?.data || e.message);
-            throw e;
+            // Ignore if room already exists (409)
+            if (e.response && e.response.status === 409) {
+                console.log('✅ Admin room already exists (skipping creation)');
+            } else {
+                console.error('Room creation failed:', e.response?.data || e.message);
+                throw e;
+            }
         }
 
         console.log('3. Connecting Socket Clients...');
         const clientA = io(URL, {
-            auth: { apiKey: API_KEY, userId: 'userA' },
-            transports: ['websocket']
+            auth: { apiKey: API_KEY, userId: 'userA' }
         });
 
         const clientB = io(URL, {
-            auth: { apiKey: API_KEY, userId: 'userB' },
-            transports: ['websocket']
+            auth: { apiKey: API_KEY, userId: 'userB' }
         });
 
         await new Promise<void>((resolve, reject) => {
@@ -60,7 +63,10 @@ async function main() {
         console.log('4. UserA creates room...');
         const roomId = await new Promise<string>((resolve, reject) => {
             clientA.emit('room:create', { roomId: 'chat-room' }, (res: any) => {
-                if (res.error) reject(new Error(res.error));
+                if (res.error) {
+                    if (res.error.includes('already exists')) resolve('chat-room');
+                    else reject(new Error(res.error));
+                }
                 else resolve(res.roomId);
             });
         });

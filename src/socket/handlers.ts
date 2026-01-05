@@ -32,7 +32,7 @@ export const registerHandlers = (io: Server, socket: Socket) => {
     };
 
     const handleJoinRoom = (
-        { roomId }: { roomId: string },
+        { roomId, peerId }: { roomId: string; peerId?: string },
         callback: (res: { ok: boolean; role?: 'admin' | 'member'; error?: string }) => void
     ) => {
         try {
@@ -47,6 +47,7 @@ export const registerHandlers = (io: Server, socket: Socket) => {
                 socketId: socket.id,
                 isAdmin,
                 joinedAt: Date.now(),
+                peerId
             };
 
             store.addMember(roomId, member);
@@ -58,6 +59,7 @@ export const registerHandlers = (io: Server, socket: Socket) => {
                 event: 'join',
                 userId,
                 isAdmin,
+                peerId
             });
 
             callback({ ok: true, role: isAdmin ? 'admin' : 'member' });

@@ -25,7 +25,7 @@ const registerHandlers = (io, socket) => {
             callback({ error: err.message });
         }
     };
-    const handleJoinRoom = ({ roomId }, callback) => {
+    const handleJoinRoom = ({ roomId, peerId }, callback) => {
         try {
             const room = store_1.store.getRoom(roomId);
             if (!room) {
@@ -37,6 +37,7 @@ const registerHandlers = (io, socket) => {
                 socketId: socket.id,
                 isAdmin,
                 joinedAt: Date.now(),
+                peerId
             };
             store_1.store.addMember(roomId, member);
             socket.join(roomId);
@@ -46,6 +47,7 @@ const registerHandlers = (io, socket) => {
                 event: 'join',
                 userId,
                 isAdmin,
+                peerId
             });
             callback({ ok: true, role: isAdmin ? 'admin' : 'member' });
         }

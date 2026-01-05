@@ -4,13 +4,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const http_1 = __importDefault(require("http"));
+const peer_1 = require("peer");
 const app_1 = __importDefault(require("./http/app"));
 const socket_1 = require("./socket");
 const config_1 = require("./config");
 const server = http_1.default.createServer(app_1.default);
 // Initialize Socket.IO
 (0, socket_1.initSocket)(server);
+// Initialize PeerJS
+const peerServer = (0, peer_1.ExpressPeerServer)(server, {
+    path: '/'
+});
+app_1.default.use('/peerjs', peerServer);
 // Start server
-server.listen("0.0.0.0", config_1.config.PORT, () => {
+server.listen(config_1.config.PORT, () => {
     console.log(`Server running on port ${config_1.config.PORT}`);
 });

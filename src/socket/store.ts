@@ -3,6 +3,7 @@ export interface Member {
     socketId: string;
     isAdmin: boolean;
     joinedAt: number;
+    peerId?: string;
 }
 
 export interface Room {

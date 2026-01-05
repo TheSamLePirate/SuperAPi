@@ -1,7 +1,7 @@
 # API & Realtime Server Documentation
 
 **Target Audience:** AI Agents (React/Node clients)  
-**Protocol:** REST (HTTP) + WebSocket (Socket.IO v4)  
+**Protocol:** REST (HTTP) + WebSocket (Socket.IO v4) + WebRTC (PeerJS)  
 **Auth Strategy:** API Key
 
 ---
@@ -29,24 +29,17 @@ Checks if the server is running.
 - **Response**: `{ "ok": true }`
 
 ### B. Admin: Create Room
-Programmatically create a room (useful for setting up contexts before agents join).
+Programmatically create a room.
 - **POST** `/v1/rooms`
 - **Headers**: `x-api-key: <API_KEY>`
-- **Body**:
-  ```json
-  {
-    "roomId": "optional-custom-id",
-    "createdBy": "admin-agent-id"
-  }
-  ```
-- **Response (200)**: returns `Room` object.
-- **Response (409)**: Room already exists.
+- **Body**: `{ "roomId": "optional-custom-id", "createdBy": "admin-agent-id" }`
+- **Response**: `Room` object.
 
 ### C. Admin: List Rooms
-List all active rooms and their metadata.
+List all active rooms.
 - **GET** `/v1/rooms`
 - **Headers**: `x-api-key: <API_KEY>`
-- **Response (200)**: Array of `Room` objects (mapped for JSON).
+- **Response**: Array of `Room` objects.
 
 ---
 
@@ -56,84 +49,84 @@ List all active rooms and their metadata.
 **Transport**: `websocket` suggested.
 
 ### Connection
-To connect, you **MUST** provide `apiKey` and `userId`.
-
 ```javascript
 import { io } from "socket.io-client";
 
 const socket = io("http://localhost:3000", {
-  auth: {
-    apiKey: "dev-secret-key-123",
-    userId: "agent-007"
-  }
+  auth: { apiKey: "dev-secret-key-123", userId: "agent-007" }
 });
 ```
 
-### Client -> Server Events (Emitters)
+### Client -> Server Events
 
 #### `room:create`
-Create a new room. The creator is automatically joined as an admin.
-- **Payload**: `{ "roomId": "optional_id" }` (if empty, server generates one)
-- **Ack Callback**: 
-  - Success: `{ "roomId": "..." }`
-  - Error: `{ "error": "message" }`
+- **Payload**: `{ "roomId": "optional_id" }`
+- **Ack**: `{ "roomId": "..." }`
 
 #### `room:join`
-Join an existing room.
-- **Payload**: `{ "roomId": "target_room_id" }`
-- **Ack Callback**:
-  - Success: `{ "ok": true, "role": "admin" | "member" }`
-  - Error: `{ "ok": false, "error": "message" }`
+Join a room and optionally announce your PeerJS ID for WebRTC.
+- **Payload**: `{ "roomId": "target_room_id", "peerId": "my-peerjs-id" (optional) }`
+- **Ack**: `{ "ok": true, "role": "admin" | "member" }`
 
 #### `room:leave`
-Leave a room.
 - **Payload**: `{ "roomId": "target_room_id" }`
-- **Ack Callback**: `{ "ok": true }`
+- **Ack**: `{ "ok": true }`
 
 #### `room:emit`
-Broadcast a generic message to all other members in the room.
-- **Payload**: 
-  ```json
-  {
-    "roomId": "target_room_id",
-    "event": "custom-event-name",
-    "payload": { "any": "json", "data": 123 } 
-  }
-  ```
-- **Ack Callback**: `{ "ok": true }` (or error)
+Broadcast message to room.
+- **Payload**: `{ "roomId": "...", "event": "custom-event", "payload": { ... } }`
+- **Ack**: `{ "ok": true }`
 
----
-
-### Server -> Client Events (Listeners)
+### Server -> Client Events
 
 #### `room:presence`
-Triggered when a user joins or leaves a room you are in.
+Triggered when a user joins or leaves.
 - **Structure**:
   ```json
   {
     "roomId": "string",
     "event": "join" | "leave",
     "userId": "string",
-    "isAdmin": boolean (only present on 'join')
+    "isAdmin": boolean,
+    "peerId": "string" (Optional: only if user provided it on join)
   }
   ```
 
 #### `<custom-event-name>` (via `room:emit`)
-When another user calls `room:emit`, you receive the event name specified there.
-- **Structure (Message Envelope)**:
-  ```json
-  {
-    "roomId": "string",
-    "from": "sender_user_id",
-    "event": "custom-event-name",
-    "payload": { ... }, 
-    "ts": 1678900000000 (timestamp)
-  }
-  ```
+- **Structure**: `{ "roomId", "from", "event", "payload", "ts" }`
 
 ---
 
-## 4. Types & Data Structures
+## 4. WebRTC (PeerJS)
+
+**PeerServer Endpoint**: `http://<HOST>:<PORT>/peerjs`
+
+### Usage
+Clients can use `peerjs` library to establish direct P2P connections.
+
+1. **Connect to PeerServer**:
+   ```javascript
+   import Peer from 'peerjs';
+   const peer = new Peer(undefined, {
+     host: 'localhost',
+     port: 3000,
+     path: '/peerjs'
+   });
+   
+   peer.on('open', (id) => {
+     // Now connect to Socket.IO and send this id
+     socket.emit('room:join', { roomId: '...', peerId: id });
+   });
+   ```
+
+2. **Establish Call/Data Connection**:
+   - Listen for `room:presence` (event: 'join').
+   - Extract `peerId` from the payload.
+   - Use `peer.connect(remotePeerId)` or `peer.call(remotePeerId, stream)`.
+
+---
+
+## 5. Types & Data Structures
 
 ### Room Object
 ```typescript
@@ -141,7 +134,7 @@ interface Room {
   roomId: string;
   createdAt: number;
   createdBy: string;
-  admins: string[]; // Array of userIds
+  admins: string[];
   members: Member[];
   bannedUserIds: string[];
 }
@@ -154,17 +147,6 @@ interface Member {
   socketId: string;
   isAdmin: boolean;
   joinedAt: number;
+  peerId?: string; // Optional WebRTC ID
 }
 ```
-
-## 5. Agent Interaction Workflow Example
-
-1. **Connect**: Initialize Socket.IO with credentials.
-2. **Setup**: Agent A calls `room:create` -> gets `roomId`.
-3. **Share**: Agent A shares `roomId` with Agent B (via external channel or predefined ID).
-4. **Join**: Agent B calls `room:join` with `roomId`.
-   - Agent A receives `room:presence` (event: 'join', userId: 'Agent B').
-5. **Communicate**: 
-   - Agent B emits `room:emit` { event: 'task_update', payload: { status: 'ready' } }.
-   - Agent A receives 'task_update' with wrapper including `from: 'Agent B'`.
-6. **Cleanup**: Agents call `room:leave` or disconnect. Room auto-deletes when empty.
