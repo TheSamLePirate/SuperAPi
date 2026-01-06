@@ -46,6 +46,8 @@ async function main() {
         // Connect Client
         console.log('   Connecting Socket Client...');
         const client = io(URL, {
+            path: '/socket.io',
+            transports: ['websocket'],
             auth: { apiKey: API_KEY, userId: 'api-tester' }
         });
 

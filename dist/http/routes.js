@@ -34,4 +34,33 @@ router.get('/v1/rooms', middleware_1.apiKeyMiddleware, (req, res) => {
     }));
     res.json(rooms);
 });
+// Send event to socket room
+router.post('/toSocket/:event', middleware_1.apiKeyMiddleware, (req, res) => {
+    const { event } = req.params;
+    const { roomId, payload } = req.body;
+    if (!roomId) {
+        return res.status(400).json({ error: 'Missing roomId' });
+    }
+    const io = req.app.get('io');
+    if (!io) {
+        return res.status(500).json({ error: 'Socket.IO not initialized' });
+    }
+    io.to(roomId).emit(event, payload);
+    res.json({ success: true, event, roomId });
+});
+// Set memory data
+router.post('/memory/:dataName', middleware_1.apiKeyMiddleware, (req, res) => {
+    const { dataName } = req.params;
+    store_1.store.setMemory(dataName, req.body);
+    res.json({ success: true, key: dataName });
+});
+// Get memory data
+router.get('/memory/:dataName', middleware_1.apiKeyMiddleware, (req, res) => {
+    const { dataName } = req.params;
+    const data = store_1.store.getMemory(dataName);
+    if (data === undefined) {
+        return res.status(404).json({ error: 'Data not found' });
+    }
+    res.json(data);
+});
 exports.default = router;

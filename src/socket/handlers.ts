@@ -25,9 +25,9 @@ export const registerHandlers = (io: Server, socket: Socket) => {
             store.addMember(roomId, member);
             socket.join(roomId);
 
-            callback({ roomId });
+            if (callback) callback({ roomId });
         } catch (err: any) {
-            callback({ error: err.message });
+            if (callback) callback({ error: err.message });
         }
     };
 
@@ -38,7 +38,8 @@ export const registerHandlers = (io: Server, socket: Socket) => {
         try {
             const room = store.getRoom(roomId);
             if (!room) {
-                return callback({ ok: false, error: 'Room not found' });
+                if (callback) callback({ ok: false, error: 'Room not found' });
+                return;
             }
 
             const isAdmin = room.admins.has(userId);
@@ -54,17 +55,26 @@ export const registerHandlers = (io: Server, socket: Socket) => {
             socket.join(roomId);
 
             // Notify others
-            socket.to(roomId).emit('room:presence', {
+            const joinPayload = {
                 roomId,
                 event: 'join',
                 userId,
                 isAdmin,
                 peerId
+            };
+            socket.to(roomId).emit('room:presence', joinPayload);
+            // Monitor
+            io.to('admin-room').emit('monitor:socket:outgoing', {
+                roomId,
+                event: 'room:presence',
+                payload: joinPayload,
+                timestamp: Date.now(),
+                socketId: socket.id
             });
 
-            callback({ ok: true, role: isAdmin ? 'admin' : 'member' });
+            if (callback) callback({ ok: true, role: isAdmin ? 'admin' : 'member' });
         } catch (err: any) {
-            callback({ ok: false, error: err.message });
+            if (callback) callback({ ok: false, error: err.message });
         }
     };
 
@@ -76,10 +86,19 @@ export const registerHandlers = (io: Server, socket: Socket) => {
         socket.leave(roomId);
 
         // Notify others
-        socket.to(roomId).emit('room:presence', {
+        const leavePayload = {
             roomId,
             event: 'leave',
             userId,
+        };
+        socket.to(roomId).emit('room:presence', leavePayload);
+        // Monitor
+        io.to('admin-room').emit('monitor:socket:outgoing', {
+            roomId,
+            event: 'room:presence',
+            payload: leavePayload,
+            timestamp: Date.now(),
+            socketId: socket.id
         });
 
         if (callback) callback({ ok: true });
@@ -98,12 +117,21 @@ export const registerHandlers = (io: Server, socket: Socket) => {
 
         // Broadcast to room (excluding sender)
         // outbound broadcast: { roomId, from: userId, event, payload, ts }
-        socket.to(roomId).emit(event, {
+        const outboundPayload = {
             roomId,
             from: userId,
             event,
             payload,
             ts: Date.now(),
+        };
+        socket.to(roomId).emit(event, outboundPayload);
+        // Monitor
+        io.to('admin-room').emit('monitor:socket:outgoing', {
+            roomId,
+            event: event,
+            payload: outboundPayload,
+            timestamp: Date.now(),
+            socketId: socket.id
         });
 
         if (callback) callback({ ok: true });
@@ -123,10 +151,19 @@ export const registerHandlers = (io: Server, socket: Socket) => {
         for (const room of allRooms) {
             if (room.members.has(socket.id)) {
                 store.removeMember(room.roomId, socket.id);
-                io.to(room.roomId).emit('room:presence', {
+                const leavePayload = {
                     roomId: room.roomId,
                     event: 'leave',
                     userId,
+                };
+                io.to(room.roomId).emit('room:presence', leavePayload);
+                // Monitor
+                io.to('admin-room').emit('monitor:socket:outgoing', {
+                    roomId: room.roomId,
+                    event: 'room:presence',
+                    payload: leavePayload,
+                    timestamp: Date.now(),
+                    socketId: socket.id
                 });
             }
         }

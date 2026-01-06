@@ -8,6 +8,10 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: config.MAX_HTTP_BUFFER_SIZE }));
 
+// Monitor API requests
+import { monitorRequestMiddleware } from './middleware';
+app.use(monitorRequestMiddleware);
+
 app.use('/', routes);
 
 export default app;

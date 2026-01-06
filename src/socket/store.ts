@@ -19,6 +19,10 @@ class Store {
     private rooms: Map<string, Room> = new Map();
     private memory: Map<string, any> = new Map();
 
+    constructor() {
+        this.createRoom('admin-room', 'system');
+    }
+
     createRoom(roomId: string, createdBy: string): Room {
         if (this.rooms.has(roomId)) {
             throw new Error(`Room ${roomId} already exists`);

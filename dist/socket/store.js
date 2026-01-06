@@ -4,6 +4,8 @@ exports.store = void 0;
 class Store {
     constructor() {
         this.rooms = new Map();
+        this.memory = new Map();
+        this.createRoom('admin-room', 'system');
     }
     createRoom(roomId, createdBy) {
         if (this.rooms.has(roomId)) {
@@ -54,6 +56,12 @@ class Store {
     }
     getAllRooms() {
         return Array.from(this.rooms.values());
+    }
+    setMemory(key, value) {
+        this.memory.set(key, value);
+    }
+    getMemory(key) {
+        return this.memory.get(key);
     }
 }
 exports.store = new Store();
