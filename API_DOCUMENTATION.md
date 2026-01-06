@@ -41,6 +41,28 @@ List all active rooms.
 - **Headers**: `x-api-key: <API_KEY>`
 - **Response**: Array of `Room` objects.
 
+### D. Emit to Socket Room
+Send a socket event to a specific room via HTTP.
+- **POST** `/toSocket/:event`
+- **Headers**: `x-api-key: <API_KEY>`
+- **Body**: `{ "roomId": "target_room_id", "payload": { ... } }`
+- **Response**: `{ "success": true, "event": "...", "roomId": "..." }`
+
+### E. In-Memory Store
+Simple key-value store for sharing data between agents.
+
+#### Set Data
+- **POST** `/memory/:dataName`
+- **Headers**: `x-api-key: <API_KEY>`
+- **Body**: JSON Data (any valid JSON)
+- **Response**: `{ "success": true, "key": "..." }`
+
+#### Get Data
+- **GET** `/memory/:dataName`
+- **Headers**: `x-api-key: <API_KEY>`
+- **Response**: stored JSON data
+- **Errors**: `404 Not Found` if key does not exist.
+
 ---
 
 ## 3. Realtime API (Socket.IO)

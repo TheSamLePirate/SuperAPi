@@ -7,7 +7,8 @@ import { config } from './config';
 const server = http.createServer(app);
 
 // Initialize Socket.IO
-initSocket(server);
+const io = initSocket(server);
+app.set('io', io);
 
 // Initialize PeerJS
 const peerServer = ExpressPeerServer(server, {

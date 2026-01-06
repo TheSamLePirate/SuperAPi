@@ -17,6 +17,7 @@ export interface Room {
 
 class Store {
     private rooms: Map<string, Room> = new Map();
+    private memory: Map<string, any> = new Map();
 
     createRoom(roomId: string, createdBy: string): Room {
         if (this.rooms.has(roomId)) {
@@ -77,6 +78,14 @@ class Store {
 
     getAllRooms(): Room[] {
         return Array.from(this.rooms.values());
+    }
+
+    setMemory(key: string, value: any): void {
+        this.memory.set(key, value);
+    }
+
+    getMemory(key: string): any {
+        return this.memory.get(key);
     }
 }
 
