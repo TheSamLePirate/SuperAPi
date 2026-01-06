@@ -115,7 +115,7 @@ export default function App() {
   useEffect(() => {
     // Initialize Socket.IO
     // We prioritize WebSocket to avoid polling issues with proxies like ngrok
-    const socketUrl = URL;
+    const socketUrl = import.meta.env.VITE_API_URL || URL;
     const newSocket = io(socketUrl, {
       auth: {
         apiKey: ADMIN_KEY,

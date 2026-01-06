@@ -8,7 +8,7 @@ const initSocket = (httpServer) => {
     const io = new socket_io_1.Server(httpServer, {
         path: '/socket.io', // Explicitly set path
         cors: {
-            origin: '*', // Allow all for MVP, configure as needed
+            origin: '*', // Allow all as requested
             methods: ['GET', 'POST'],
         },
         // Optional: enforce max buffer size here if needed
