@@ -113,24 +113,43 @@ export default function App() {
   const [selectedLog, setSelectedLog] = useState<any>(null);
 
   useEffect(() => {
-    const newSocket = io(URL, {
-      path: '/socket.io',
-      transports: ['websocket', 'polling'], // Allow polling fallback
-      auth: { apiKey: ADMIN_KEY, userId: 'admin-dashboard' },
+    // Initialize Socket.IO
+    // We prioritize WebSocket to avoid polling issues with proxies like ngrok
+    const socketUrl = import.meta.env.VITE_API_URL || URL;
+    const newSocket = io(socketUrl, {
+      auth: {
+        apiKey: ADMIN_KEY,
+        userId: 'admin-dashboard'
+      },
       reconnection: true,
-      reconnectionAttempts: 5,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      timeout: 20000,
+      transports: ['websocket', 'polling'], // Try WebSocket first
+      extraHeaders: {
+        "ngrok-skip-browser-warning": "true" // Bypass ngrok warning page
+      }
     });
 
     newSocket.on('connect', () => {
       setConnected(true);
       console.log('Connected to backend');
+      console.log('Transport used:', newSocket.io.engine.transport.name);
+
+      newSocket.io.engine.on("upgrade", () => {
+        console.log("Transport upgraded to:", newSocket.io.engine.transport.name);
+      });
+
       // Join admin room to get updates
       newSocket.emit('room:join', { roomId: 'admin-room' });
       // Fetch initial rooms
       fetchRooms();
     });
 
-    newSocket.on('disconnect', () => setConnected(false));
+    newSocket.on('disconnect', (reason) => {
+      setConnected(false);
+      console.log('Disconnected:', reason);
+    });
 
     newSocket.on('monitor:api:request', (data) => {
       const log = { ...data, id: Math.random().toString(36).substr(2, 9) };

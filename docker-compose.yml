@@ -1,0 +1,29 @@
+services:
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - PORT=3000
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  dashboard:
+    build:
+      context: ./dashboard
+      args:
+        - VITE_API_URL=http://localhost:3000
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
