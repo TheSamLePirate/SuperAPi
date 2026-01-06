@@ -94,6 +94,7 @@ export const registerHandlers = (io: Server, socket: Socket) => {
         if (!member) {
             return callback({ ok: false, error: 'Not a member of this room' });
         }
+        console.log(payload);
 
         // Broadcast to room (excluding sender)
         // outbound broadcast: { roomId, from: userId, event, payload, ts }
