@@ -92,7 +92,7 @@ const LogItem = ({ log, type, onClick }: { log: any, type: 'api' | 'socket', onC
 
 // --- App ---
 
-const URL = 'http://localhost:3000';
+const URL = 'https://code.samlepirate.org';
 const ADMIN_KEY = 'dev-secret-key-123'; // Hardcoded for demo
 
 export default function App() {
