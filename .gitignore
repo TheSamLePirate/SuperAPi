@@ -1,4 +1,8 @@
-node_modules
+node_modules/
 package-lock.json
-dist
+dist/
 .env
+dashboard/node_modules/
+dashboard/package-lock.json
+dashboard/dist/
+dashboard/.env
