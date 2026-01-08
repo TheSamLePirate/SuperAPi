@@ -125,7 +125,7 @@ export default function App() {
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,
       timeout: 20000,
-      transports: ['websocket', 'polling'], // Try WebSocket first
+      transports: ['polling', 'websocket'], // Try WebSocket first
     });
 
     newSocket.on('connect', () => {
