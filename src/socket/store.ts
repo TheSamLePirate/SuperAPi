@@ -80,6 +80,24 @@ class Store {
         return this.rooms.get(roomId)?.members.get(socketId);
     }
 
+    getMembersByUserId(roomId: string, targetUserId: string): Member[] {
+        const room = this.rooms.get(roomId);
+        if (!room) return [];
+        return Array.from(room.members.values()).filter(m => m.userId === targetUserId);
+    }
+
+    getAdminMembers(roomId: string): Member[] {
+        const room = this.rooms.get(roomId);
+        if (!room) return [];
+        return Array.from(room.members.values()).filter(m => m.isAdmin);
+    }
+
+    getAllMembers(roomId: string): Member[] {
+        const room = this.rooms.get(roomId);
+        if (!room) return [];
+        return Array.from(room.members.values());
+    }
+
     getAllRooms(): Room[] {
         return Array.from(this.rooms.values());
     }

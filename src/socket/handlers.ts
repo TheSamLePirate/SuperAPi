@@ -106,16 +106,19 @@ export const registerHandlers = (io: Server, socket: Socket) => {
 
     // Generic messaging
     const handleEmit = (
-        { roomId, event, payload }: { roomId: string; event: string; payload: any },
+        { roomId, event, payload, sendTo }: { 
+            roomId: string; 
+            event: string; 
+            payload: any;
+            sendTo?: 'allExcludingSender' | 'allIncludingSender' | 'admin' | string;
+        },
         callback: (res: { ok: boolean; error?: string }) => void
     ) => {
         const member = store.getMember(roomId, socket.id);
         if (!member) {
             return callback({ ok: false, error: 'Not a member of this room' });
         }
-        console.log(payload);
 
-        // Broadcast to room (excluding sender)
         // outbound broadcast: { roomId, from: userId, event, payload, ts }
         const outboundPayload = {
             roomId,
@@ -125,17 +128,46 @@ export const registerHandlers = (io: Server, socket: Socket) => {
             ts: Date.now(),
         };
 
-        // Send excluding sender
-        socket.to(roomId).emit(event, outboundPayload);
+        // Determine target based on sendTo option (default: allExcludingSender)
+        const target = sendTo || 'allExcludingSender';
 
-        // Send to every room user
-        // socket.nsp.to(roomId).emit(event, outboundPayload);
+        switch (target) {
+            case 'allExcludingSender':
+                // Send to all room members except sender
+                socket.to(roomId).emit(event, outboundPayload);
+                break;
+
+            case 'allIncludingSender':
+                // Send to all room members including sender
+                io.to(roomId).emit(event, outboundPayload);
+                break;
+
+            case 'admin':
+                // Send only to admin members in the room
+                const admins = store.getAdminMembers(roomId);
+                for (const admin of admins) {
+                    io.to(admin.socketId).emit(event, outboundPayload);
+                }
+                break;
+
+            default:
+                // sendTo is a specific userId
+                const targetMembers = store.getMembersByUserId(roomId, target);
+                if (targetMembers.length === 0) {
+                    return callback({ ok: false, error: `User ${target} not found in room` });
+                }
+                for (const targetMember of targetMembers) {
+                    io.to(targetMember.socketId).emit(event, outboundPayload);
+                }
+                break;
+        }
 
         // Monitor
         io.to('admin-room').emit('monitor:socket:outgoing', {
             roomId,
             event: event,
             payload: outboundPayload,
+            sendTo: target,
             timestamp: Date.now(),
             socketId: socket.id
         });

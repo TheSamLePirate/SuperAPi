@@ -95,9 +95,22 @@ Join a room and optionally announce your PeerJS ID for WebRTC.
 - **Ack**: `{ "ok": true }`
 
 #### `room:emit`
-Broadcast message to room.
-- **Payload**: `{ "roomId": "...", "event": "custom-event", "payload": { ... } }`
-- **Ack**: `{ "ok": true }`
+Broadcast message to room with optional targeting.
+- **Payload**: 
+  ```json
+  { 
+    "roomId": "...", 
+    "event": "custom-event", 
+    "payload": { ... },
+    "sendTo": "allExcludingSender" | "allIncludingSender" | "admin" | "<userId>"
+  }
+  ```
+- **sendTo options** (optional, default: `allExcludingSender`):
+  - `allExcludingSender` - Send to all room members except the sender
+  - `allIncludingSender` - Send to all room members including the sender
+  - `admin` - Send only to admin members in the room
+  - `<userId>` - Send only to a specific user by their userId
+- **Ack**: `{ "ok": true }` or `{ "ok": false, "error": "User <userId> not found in room" }`
 
 ### Server -> Client Events
 

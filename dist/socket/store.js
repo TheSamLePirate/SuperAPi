@@ -54,6 +54,24 @@ class Store {
     getMember(roomId, socketId) {
         return this.rooms.get(roomId)?.members.get(socketId);
     }
+    getMembersByUserId(roomId, targetUserId) {
+        const room = this.rooms.get(roomId);
+        if (!room)
+            return [];
+        return Array.from(room.members.values()).filter(m => m.userId === targetUserId);
+    }
+    getAdminMembers(roomId) {
+        const room = this.rooms.get(roomId);
+        if (!room)
+            return [];
+        return Array.from(room.members.values()).filter(m => m.isAdmin);
+    }
+    getAllMembers(roomId) {
+        const room = this.rooms.get(roomId);
+        if (!room)
+            return [];
+        return Array.from(room.members.values());
+    }
     getAllRooms() {
         return Array.from(this.rooms.values());
     }
