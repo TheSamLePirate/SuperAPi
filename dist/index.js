@@ -21,4 +21,5 @@ app_1.default.use('/peerjs', peerServer);
 // Start server
 server.listen(config_1.config.PORT, () => {
     console.log(`Server running on port ${config_1.config.PORT}`);
+    console.log("Version 1.1.1");
 });
