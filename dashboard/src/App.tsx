@@ -224,7 +224,7 @@ export default function App() {
       <div className="w-64 bg-slate-950 border-r border-slate-800 flex flex-col">
         <div className="p-6 border-b border-slate-800">
           <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-            SuperAPi Admin
+            SuperAPi Admin v1.0.0
           </h1>
           <div className="flex items-center gap-2 mt-2">
             <div className={cn("w-2 h-2 rounded-full", connected ? "bg-emerald-500 animate-pulse" : "bg-red-500")} />
