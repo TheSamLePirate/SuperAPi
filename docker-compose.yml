@@ -15,9 +15,9 @@ services:
     build:
       context: ./dashboard
       args:
-        - VITE_API_URL=/
+        - VITE_API_URL=https://code.samlepirate.com
     ports:
-      - "8080:80"
+      - "8080:8080"
     depends_on:
       - api
     restart: unless-stopped

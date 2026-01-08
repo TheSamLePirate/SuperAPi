@@ -92,7 +92,7 @@ const LogItem = ({ log, type, onClick }: { log: any, type: 'api' | 'socket', onC
 
 // --- App ---
 
-const URL = 'https://code.samlepirate.org';
+const URL = import.meta.env.VITE_API_URL || 'https://code.samlepirate.com';
 const ADMIN_KEY = 'dev-secret-key-123'; // Hardcoded for demo
 
 export default function App() {
