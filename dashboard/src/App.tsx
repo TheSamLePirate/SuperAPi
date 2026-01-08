@@ -92,7 +92,7 @@ const LogItem = ({ log, type, onClick }: { log: any, type: 'api' | 'socket', onC
 
 // --- App ---
 
-const URL = import.meta.env.VITE_API_URL || 'https://code.samlepirate.org';
+const URL = 'https://code.samlepirate.org';
 const ADMIN_KEY = 'dev-secret-key-123'; // Hardcoded for demo
 
 export default function App() {
@@ -115,7 +115,7 @@ export default function App() {
   useEffect(() => {
     // Initialize Socket.IO
     // We prioritize WebSocket to avoid polling issues with proxies like ngrok
-    const socketUrl = import.meta.env.VITE_API_URL || URL;
+    const socketUrl = URL;
     const newSocket = io(socketUrl, {
       auth: {
         apiKey: ADMIN_KEY,
@@ -126,9 +126,6 @@ export default function App() {
       reconnectionDelay: 1000,
       timeout: 20000,
       transports: ['websocket', 'polling'], // Try WebSocket first
-      extraHeaders: {
-        "ngrok-skip-browser-warning": "true" // Bypass ngrok warning page
-      }
     });
 
     newSocket.on('connect', () => {

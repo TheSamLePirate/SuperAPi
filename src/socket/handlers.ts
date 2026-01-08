@@ -124,7 +124,13 @@ export const registerHandlers = (io: Server, socket: Socket) => {
             payload,
             ts: Date.now(),
         };
+
+        // Send excluding sender
         socket.to(roomId).emit(event, outboundPayload);
+
+        // Send to every room user
+        // socket.nsp.to(roomId).emit(event, outboundPayload);
+
         // Monitor
         io.to('admin-room').emit('monitor:socket:outgoing', {
             roomId,
