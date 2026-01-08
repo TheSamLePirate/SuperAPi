@@ -30,4 +30,4 @@ COPY --from=builder /app/dist ./dist
 # Expose port 8080
 EXPOSE 8080
 
-CMD ["serve", "-s", "dist", "-l", "8080"]
+CMD ["serve", "-s", "dist", "-l", "tcp://0.0.0.0:8080"]
